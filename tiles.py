@@ -22,8 +22,8 @@ path_two_sided_overall = pygame.transform.scale(pygame.image.load('Textures/path
 path_two_sided = crop(path_two_sided_overall, 2, 1)
 path_three_sided_overall = pygame.transform.scale(pygame.image.load('Textures/path/path_three_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
 path_three_sided = crop(path_three_sided_overall, 4, 4)
-path_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/path/path_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 3))
-path_four_sided = crop(path_four_sided_overall, 4, 3)
+path_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/path/path_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
+path_four_sided = crop(path_four_sided_overall, 4, 4)
 
 water_center = pygame.transform.scale(pygame.image.load('Textures/water/water_center.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 water_corner = pygame.transform.scale(pygame.image.load('Textures/water/water_corners.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
@@ -34,8 +34,8 @@ water_two_sided_overall = pygame.transform.scale(pygame.image.load('Textures/wat
 water_two_sided = crop(water_two_sided_overall, 2, 1)
 water_three_sided_overall = pygame.transform.scale(pygame.image.load('Textures/water/water_three_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
 water_three_sided = crop(water_three_sided_overall, 4, 4)
-water_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/water/water_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 3))
-water_four_sided = crop(water_four_sided_overall, 4, 3)
+water_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/water/water_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
+water_four_sided = crop(water_four_sided_overall, 4, 4)
 
 farmland_center = pygame.transform.scale(pygame.image.load('Textures/farmland/farmland_center.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 farmland_corner = pygame.transform.scale(pygame.image.load('Textures/farmland/farmland_corners.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
@@ -48,8 +48,8 @@ farmland_two_sided_overall = pygame.transform.scale(pygame.image.load('Textures/
 farmland_two_sided = crop(farmland_two_sided_overall, 2, 1)
 farmland_three_sided_overall = pygame.transform.scale(pygame.image.load('Textures/farmland/farmland_three_sided_2.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
 farmland_three_sided = crop(farmland_three_sided_overall, 4, 4)
-farmland_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/farmland/farmland_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 3))
-farmland_four_sided = crop(farmland_four_sided_overall, 4, 3)
+farmland_four_sided_overall = pygame.transform.scale(pygame.image.load('Textures/farmland/farmland_four_sided.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 4))
+farmland_four_sided = crop(farmland_four_sided_overall, 4, 4)
 
 
 path_images = [path_center, path_corners, path_corners, path_one_sided, path_two_sided, path_three_sided, path_four_sided]
@@ -275,6 +275,14 @@ def create_path(id, x, y, area, images):
             return images[6][8]
         elif corners[0][1] == 0 and corners[1][0] == 0 and corners[0][0] == 1 and corners[1][1] == 1:
             return images[6][9]
+        elif corners[0][0] == 0 and corners[1][0] == 0 and corners[0][1] == 1 and corners[1][1] == 1:
+            return images[6][12]
+        elif corners[0][0] == 0 and corners[0][1] == 0 and corners[1][0] == 1 and corners[1][1] == 1:
+            return images[6][13]
+        elif corners[0][1] == 0 and corners[1][1] == 0 and corners[1][0] == 1 and corners[0][0] == 1:
+            return images[6][15]
+        elif corners[1][0] == 0 and corners[1][1] == 0 and corners[0][0] == 1 and corners[0][1] == 1:
+            return images[6][14]
         
         elif corners[0][1] == 0 and corners[1][0] == 0 and corners[1][1] == 0:
             return images[6][4]
