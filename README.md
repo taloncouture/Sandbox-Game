@@ -8,3 +8,5 @@ farmland will be added very soon.
 Use either the arrow keys or WASD to move around.
 Press 'e' to open the inventory and use the mouse to move around items.
 Press 'p' to create a path when the shovel is selected.
+
+## Lines of code: 853
