@@ -87,6 +87,10 @@ while True:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             inventory_object.mouse_update(mouse_x, mouse_y, 'pressed')
 
+        if event.type == pygame.MOUSEMOTION:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            inventory_object.mouse_update(mouse_x, mouse_y, 'movement')
+
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -107,7 +111,7 @@ while True:
         player_group.update(inventory_object.slots[3][inventory_object.toolbar_selected_slot])
         obstacle_sprites.update(x_offset, y_offset)
         #print(len(obstacle_sprites), len(visible_sprites))
-        inventory_object.toolbar()
+        #inventory_object.toolbar()
         tiles.tile_collisions_group.empty()
 
     else:
@@ -119,12 +123,14 @@ while True:
     if inventory_opened: 
         inventory_group.draw(screen)
         inventory_group.update(player_object.rect.x, player_object.rect.y)
-    inventory_object.toolbar()
+    else:
+        inventory_object.toolbar()
     # player_group.draw(screen)
     # obstacle_sprites.draw(screen)
     # for sprite in visible_sprites:
     #         pygame.draw.rect(screen, 'red', sprite.hitbox, 3)
     pygame.display.update()
     clock.tick(60)
+
 
 

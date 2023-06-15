@@ -3,6 +3,7 @@ import config
 import map
 import tiles
 import items
+import animated_tiles
 
 class Player(pygame.sprite.Sprite):
     
@@ -58,9 +59,8 @@ class Player(pygame.sprite.Sprite):
         self.facing = 'down'
 
         self.dig_animation_index = 0
-        dig_0 = pygame.transform.scale(pygame.image.load('Textures/dig_states/dig_0.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
-        dig_1 = pygame.transform.scale(pygame.image.load('Textures/dig_states/dig_1.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
-        self.dig_frames = [dig_0, dig_1]
+        self.path_dig_frames = animated_tiles.path_dig_frames
+        self.farmland_dig_frames = animated_tiles.farmland_dig_frames
 
         self.obstacle_sprites = obstacle_sprites
 
@@ -86,7 +86,7 @@ class Player(pygame.sprite.Sprite):
         #         self.highlight_tile(1, 0)
         #     if self.facing == 'left':
         #         self.highlight_tile(-1, 0)
-        if self.selected_object == items.shovel:
+        if self.selected_object == items.shovel or self.selected_object == items.hoe or self.selected_object == items.axe:
             if self.facing == 'down':
                 self.highlighted_tile_y = 1
                 self.highlighted_tile_x = 0
@@ -146,8 +146,10 @@ class Player(pygame.sprite.Sprite):
     def input(self):
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_p] and self.selected_object == items.shovel:
+        if keys[pygame.K_SPACE] and self.selected_object == items.shovel:
             self.create_path()
+        if keys[pygame.K_SPACE] and self.selected_object == items.hoe:
+            self.create_farmland()
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = 'left'
@@ -180,13 +182,13 @@ class Player(pygame.sprite.Sprite):
         self.image = frames[int(self.animation_index)]
 
     # Maybe this could merge with the regular animation
-    def dig_animation(self, x, y):
+    def dig_animation(self, x, y, frames, result):
         self.dig_animation_index += 0.1
-        if self.dig_animation_index > 1.5:
+        if self.dig_animation_index > 2:
             self.dig_animation_index = 0
-            map.overworld[y][x] = '1'
+            map.overworld[y][x] = result
         else:
-            self.screen.blit(self.dig_frames[int(self.dig_animation_index)], (x * config.TILE_WIDTH - self.offset_x, y * config.TILE_WIDTH - self.offset_y))
+            self.screen.blit(frames[int(self.dig_animation_index)], (x * config.TILE_WIDTH - self.offset_x, y * config.TILE_WIDTH - self.offset_y))
             #map.overworld[y][x] = self.frames[int(self.animation_index)]
 
     # Check if there are any repetitive parts in here
@@ -197,9 +199,17 @@ class Player(pygame.sprite.Sprite):
         if tile_x >= 0 and tile_x < len(map.overworld[0]) - 1 and tile_y >= 0 and tile_y < len(map.overworld) - 1:
 
             if map.overworld[tile_y][tile_x] == '0':
-                self.dig_animation(tile_x, tile_y)
+                self.dig_animation(tile_x, tile_y, self.path_dig_frames, '1')
                 if self.facing == 'right': self.animation(self.shovel_right_frames)
                 #map.overworld[tile_y][tile_x] = '1'
+
+    def create_farmland(self):
+        tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
+        tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
+
+        if tile_x >= 0 and tile_x < len(map.overworld[0]) - 1 and tile_y >= 0 and tile_y < len(map.overworld) - 1:
+            if map.overworld[tile_y][tile_x] == '0':
+                self.dig_animation(tile_x, tile_y, self.farmland_dig_frames, 'f')
 
     def move(self):
 
