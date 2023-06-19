@@ -9,4 +9,4 @@ Use either the arrow keys or WASD to move around.
 Press 'e' to open the inventory and use the mouse to move around items.
 Press space to use the tool in hand.
 
-## Lines of code: 912
+## Lines of code: 1015
