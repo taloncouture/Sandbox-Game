@@ -6,6 +6,8 @@ import config
 class Tree(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
+
+        self.name = 'tree'
         
         self.image = pygame.transform.scale(pygame.image.load('Textures/tree.png'), (width, height))
         self.rect = self.image.get_rect()

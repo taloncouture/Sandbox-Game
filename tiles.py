@@ -2,6 +2,7 @@ import pygame
 import config
 import tree
 import map
+import sprites
 
 # Put in the x and y width and height (0 is not included) and this goes from left to right and then top to bottom (like reading a book)
 def crop(surface, num_x, num_y):
@@ -70,16 +71,16 @@ class Tile_Collisions(pygame.sprite.Sprite):
 tile_collisions_group = pygame.sprite.Group()
 
 # Creates objects like trees by scanning through the overworld map -- arguments could be improved and also change the map so that it could be a variable
-def create_objects(obstacle_sprites, visible_sprites):
+def create_objects():
     for y in range(len(map.overworld)):
         for x in range(len(map.overworld[y])):
             if map.overworld[y][x] == 't':
                 tree_object = tree.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
-                obstacle_sprites.add(tree_object)
-                visible_sprites.add(tree_object)
+                sprites.obstacle_sprites.add(tree_object)
+                sprites.visible_sprites.add(tree_object)
 
 # This gets the tile id and returns the tile image which is drawn in main.py
-def TileID(id, x, y, area, surface, x_offset, y_offset, obstacle_sprites):
+def TileID(id, x, y, area, surface, x_offset, y_offset):
     if id == '0': return grass
     if id == '1': return create_path(id, x, y, area, path_images)
     if id == 'w': 

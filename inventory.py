@@ -1,129 +1,173 @@
 import pygame
 import config
 import items
+import random
 
-class Inventory(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, screen):
-        super().__init__()
 
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+slots = [
+    [items.hoe, items.shovel, items.axe],
+    [items.wood, 'empty', 'empty'],
+    ['empty', items.wood, items.wood],
+    ['empty', 'empty', 'empty']
+]
 
-        self.image = pygame.transform.scale(pygame.image.load('Textures/inventory.png'), (self.width, self.height))
-        self.rect = self.image.get_rect()
+slots_amounts = [
+    [0, 0, 0],
+    [2, 0, 0],
+    [0, 5, 1],
+    [0, 0, 0]
+]
 
-        self.toolbar_image = pygame.transform.scale(pygame.image.load('Textures/toolbar.png'), (config.TILE_WIDTH * 3, config.TILE_WIDTH))
-        self.selector_image = pygame.transform.scale(pygame.image.load('Textures/selector.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
+def is_full(name):
+    full = True
+    for y in range(len(slots)):
+        for x in range(len(slots[y])):
+            if slots[y][x] == 'empty':
+                full = False
+            elif slots[y][x].get('name') == name:
+                full = False
+    return full
 
-        self.rect.x = self.x
-        self.rect.y = self.y
+mouse_x = 0
+mouse_y = 0
 
-        self.screen = screen
 
-        self.selected_item = 'none'
-        self.last_slot = 'none'
+x = 352 + config.TILE_WIDTH
+y = 352 - config.TILE_WIDTH
+width = 3 * config.TILE_WIDTH
+height = 4 * config.TILE_WIDTH
 
-        # self.label = 'none'
-        # self.label_rect = pygame.rect.Rect(0, 0, 0, 0)
+image = pygame.transform.scale(pygame.image.load('Textures/inventory.png'), (width, height))
+rect = image.get_rect()
 
-        self.toolbar_selected_slot = 0
+toolbar_image = pygame.transform.scale(pygame.image.load('Textures/toolbar.png'), (config.TILE_WIDTH * 3, config.TILE_WIDTH))
+selector_image = pygame.transform.scale(pygame.image.load('Textures/selector.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 
-        self.slots = [
-            [items.hoe, items.shovel, items.axe],
-            ['empty', 'empty', 'empty'],
-            ['empty', 'empty', 'empty'],
-            ['empty', 'empty', 'empty']
-        ]
+rect.x = x
+rect.y = y
 
-        self.inventory_font = pygame.font.Font('Textures/Fonts/8bitOperatorPlus8-Regular.ttf', 20)
 
-    def update(self, player_x, player_y):
-        self.rect.x = player_x + config.TILE_WIDTH * 2
-        self.rect.y = player_y - config.TILE_WIDTH
+pygame.font.init()
+inventory_font = pygame.font.Font('Textures/Fonts/8bitOperatorPlus8-Regular.ttf', 24)
 
-        if self.rect.y < 0:
-            self.rect.y = 0
-        if self.rect.bottom > config.SCREEN_HEIGHT:
-            self.rect.bottom = config.SCREEN_HEIGHT
+def update(player_x, player_y, screen):
 
-        self.draw_items()
-        #self.toolbar()
+    rect.x = player_x + config.TILE_WIDTH * 2
+    rect.y = player_y - config.TILE_WIDTH
 
-        # Fix this so 'shovel' is not being hardcoded
-        if self.selected_item != 'none':
-            self.screen.blit(self.selected_item.get("image"), (self.mouse_x - config.ITEM_WIDTH / 2, self.mouse_y - config.ITEM_WIDTH / 2))
+    if rect.y < 0:
+        rect.y = 0
+    if rect.bottom > config.SCREEN_HEIGHT:
+        rect.bottom = config.SCREEN_HEIGHT
 
-        self.draw_label(self.mouse_x, self.mouse_y)
+    screen.blit(image, (rect.x, rect.y))
+    draw_items(screen)
 
-    # Same here with the hardcoding
-    def draw_items(self):
-        for y in range(len(self.slots)):
-            for x in range(len(self.slots[y])):
-                if self.slots[y][x] != 'empty':
-                    self.screen.blit(self.slots[y][x].get("image"), (self.rect.x + x * config.TILE_WIDTH + config.ITEM_OFFSET, self.rect.y + y * config.TILE_WIDTH + config.ITEM_OFFSET))
+    if items.selected_item != 'none':
+        screen.blit(items.selected_item.get("image"), (mouse_x - config.ITEM_WIDTH / 2, mouse_y - config.ITEM_WIDTH / 2))
 
-    def get_slots(self, mouse_x, mouse_y):
-        slot_x = int((mouse_x - self.rect.x) / config.TILE_WIDTH)
-        slot_y = int((mouse_y - self.rect.y) / config.TILE_WIDTH)
+    draw_label(screen)
 
-        return slot_x, slot_y
-    
-    def in_bounds(self, mouse_x, mouse_y):
-         if mouse_x >= self.rect.x and mouse_x < self.rect.x + self.width and mouse_y >= self.rect.y and mouse_y < self.rect.y + self.height:
-                self.slot_x = int((mouse_x - self.rect.x) / config.TILE_WIDTH)
-                self.slot_y = int((mouse_y - self.rect.y) / config.TILE_WIDTH)
+    for y in range(len(slots)):
+        for x in range(len(slots[y])):
 
-                return True
-    
-    def draw_label(self, mouse_x, mouse_y):
-        if self.in_bounds(mouse_x, mouse_y):
+            if slots[y][x] == 'empty' and items.selected_item == 'none': 
+                slots_amounts[y][x] = 0
+            draw_amounts(x, y, screen)
 
-            slot_x, slot_y = self.get_slots(mouse_x, mouse_y)
+def add_item(item, sprite):
+    if is_full(item.get('name')) == False:
 
-            if self.slots[slot_y][slot_x] != 'empty':
-                    self.label = self.inventory_font.render(self.slots[self.slot_y][self.slot_x].get("name"), False, (255, 255, 255))
-                    self.label_rect = self.label.get_rect(midbottom = (self.rect.x + (self.slot_x * config.TILE_WIDTH) + config.ITEM_OFFSET + (config.ITEM_WIDTH / 2), self.rect.y + (self.slot_y * config.TILE_WIDTH) + config.ITEM_OFFSET))
-                    #self.label_rect = self.label.get_rect(topleft = (0, 0))
-                    self.screen.blit(self.label, self.label_rect)
+        item_amount = random.randint(item.get('amount_min'), item.get('amount_max'))
 
-    # Probably could be condensed
-    def mouse_update(self, mouse_x, mouse_y, state):
-        self.mouse_x = mouse_x
-        self.mouse_y = mouse_y
+        for y in range(len(slots)):
+            for x in range(len(slots[y])):
+                if slots[y][x] != 'empty':
+                    if slots[y][x].get('name') == item.get('name'):
+                        slots_amounts[y][x] += item_amount
+                        print('adding item')
+                        items.new_item = 'none'
+                        sprite.kill()
+                        return
+        for y in range(len(slots)):
+            for x in range(len(slots[y])):
+                if slots[y][x] == 'empty':
+                    slots[y][x] = item
+                    slots_amounts[y][x] = item_amount
+                    items.new_item = 'none'
+                    sprite.kill()
+                    return
 
-        if state == 'pressed' and self.in_bounds(mouse_x, mouse_y) and self.selected_item == 'none':
 
-                if self.slots[self.slot_y][self.slot_x] != 'empty':
-                    self.selected_item = self.slots[self.slot_y][self.slot_x]
-                    self.slots[self.slot_y][self.slot_x] = 'empty'
-                    self.last_slot = self.slot_x, self.slot_y
+def draw_items(screen):
+    for y in range(len(slots)):
+        for x in range(len(slots[y])):
+            if slots[y][x] != 'empty':
+                screen.blit(slots[y][x].get("image"), (rect.x + x * config.TILE_WIDTH + config.ITEM_OFFSET, rect.y + y * config.TILE_WIDTH + config.ITEM_OFFSET))
 
-        #if state == 'movement' and self.in_bounds(mouse_x, mouse_y):
-            
-                #print(self.slots[self.slot_y][self.slot_x].get("name"))
+def get_slots():
+    slot_x = int((mouse_x - rect.x) / config.TILE_WIDTH)
+    slot_y = int((mouse_y - rect.y) / config.TILE_WIDTH)
 
-        if state == 'released':
-            if self.in_bounds(mouse_x, mouse_y) and self.slots[self.slot_y][self.slot_x] == 'empty':
-                self.slots[self.slot_y][self.slot_x] = self.selected_item
-            elif self.selected_item != 'none':
-                self.slots[self.last_slot[1]][self.last_slot[0]] = self.selected_item
-            
-            self.selected_item = 'none'
+    return slot_x, slot_y
 
-    def key_input(self, key):
-        self.toolbar_selected_slot = key - 1
+def in_bounds():
+        if mouse_x >= rect.x and mouse_x < rect.x + width and mouse_y >= rect.y and mouse_y < rect.y + height:
+            return True
+        else:
+            return False
+        
+def draw_amounts(x, y, screen):
+    if slots_amounts[y][x] > 0 and slots[y][x] != 'empty':
+        amount_txt = inventory_font.render(str(slots_amounts[y][x]), False, (255, 255, 255))
+        amount_txt_rect = amount_txt.get_rect(bottomright = (rect.x + x * config.TILE_WIDTH + config.TILE_WIDTH - config.ITEM_OFFSET, rect.y + y * config.TILE_WIDTH + config.TILE_WIDTH - config.ITEM_OFFSET))
+        screen.blit(amount_txt, amount_txt_rect)
 
-    def toolbar(self):
-        # Hardcoding issue again
-        self.toolbar_x = (config.SCREEN_WIDTH / 2) - config.TILE_WIDTH - (config.TILE_WIDTH / 2)
-        self.toolbar_y = config.SCREEN_HEIGHT - config.TILE_WIDTH
-        self.screen.blit(self.toolbar_image, (self.toolbar_x, self.toolbar_y))
-        self.screen.blit(self.selector_image, (self.toolbar_x + self.toolbar_selected_slot * config.TILE_WIDTH, self.toolbar_y))
+def draw_label(screen):
+    if in_bounds():
 
-        for x in range(len(self.slots[3])):
-            if self.slots[3][x] != 'empty':
-                self.screen.blit(self.slots[3][x].get("image"), (self.toolbar_x + x * config.TILE_WIDTH + config.ITEM_OFFSET, self.toolbar_y + config.ITEM_OFFSET))
+        slot_x, slot_y = get_slots()
+
+        if slots[slot_y][slot_x] != 'empty':
+                label = inventory_font.render(slots[slot_y][slot_x].get("name"), False, (255, 255, 255))
+                label_rect = label.get_rect(midbottom = (rect.x + (slot_x * config.TILE_WIDTH) + config.ITEM_OFFSET + (config.ITEM_WIDTH / 2), rect.y + (slot_y * config.TILE_WIDTH) + config.ITEM_OFFSET))
+                screen.blit(label, label_rect)
+
+# Probably could be condensed
+def mouse_update(state):
+
+    slot_x, slot_y = get_slots()
+
+    if state == 'pressed' and in_bounds() and items.selected_item == 'none':
+
+            if slots[slot_y][slot_x] != 'empty':
+                items.selected_item = slots[slot_y][slot_x]
+                slots[slot_y][slot_x] = 'empty'
+                items.last_slot = slot_x, slot_y
+
+    if state == 'released':
+        if in_bounds() and slots[slot_y][slot_x] == 'empty':
+            slots[slot_y][slot_x] = items.selected_item
+            slots_amounts[slot_y][slot_x] = slots_amounts[items.last_slot[1]][items.last_slot[0]]
+            slots_amounts[items.last_slot[1]][items.last_slot[0]] = 0
+        elif in_bounds() and slots[slot_y][slot_x].get('name') == items.selected_item.get('name'):
+            slots_amounts[slot_y][slot_x] += slots_amounts[items.last_slot[1]][items.last_slot[0]]
+        elif items.selected_item != 'none':
+            slots[items.last_slot[1]][items.last_slot[0]] = items.selected_item
+        
+        items.selected_item = 'none'
+
+def key_input(key):
+    items.toolbar_selected_slot = key - 1
+
+def toolbar(screen):
+    toolbar_x = (config.SCREEN_WIDTH / 2) - config.TILE_WIDTH - (config.TILE_WIDTH / 2)
+    toolbar_y = config.SCREEN_HEIGHT - config.TILE_WIDTH
+    screen.blit(toolbar_image, (toolbar_x, toolbar_y))
+    screen.blit(selector_image, (toolbar_x + items.toolbar_selected_slot * config.TILE_WIDTH, toolbar_y))
+
+    for x in range(len(slots[3])):
+        if slots[3][x] != 'empty':
+            screen.blit(slots[3][x].get("image"), (toolbar_x + x * config.TILE_WIDTH + config.ITEM_OFFSET, toolbar_y + config.ITEM_OFFSET))
 
 

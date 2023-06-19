@@ -3,17 +3,22 @@ import config
 import map
 import tiles
 import items
-import animated_tiles
+import animations
+import sprites
+import pygame
+import inventory
 
 class Player(pygame.sprite.Sprite):
     
     # Check if there are any unnecessary lines in here
-    def __init__(self, x, y, width, height, screen, obstacle_sprites):
+    def __init__(self, x, y, width, height, screen):
         super().__init__()
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+
+        self.name = 'player'
 
         self.offset_x = 0
         self.offset_y = 0
@@ -59,10 +64,11 @@ class Player(pygame.sprite.Sprite):
         self.facing = 'down'
 
         self.dig_animation_index = 0
-        self.path_dig_frames = animated_tiles.path_dig_frames
-        self.farmland_dig_frames = animated_tiles.farmland_dig_frames
+        self.path_dig_frames = animations.path_dig_frames
+        self.farmland_dig_frames = animations.farmland_dig_frames
 
-        self.obstacle_sprites = obstacle_sprites
+        self.obstacle_sprites = sprites.obstacle_sprites
+        self.visible_sprites = sprites.visible_sprites
 
     def get_offset_x(self):
         return self.offset_x
@@ -76,6 +82,9 @@ class Player(pygame.sprite.Sprite):
         self.screen.blit(self.outline, ((tile_x + x_diff) * config.TILE_WIDTH - self.offset_x, (tile_y + y_diff) * config.TILE_WIDTH - self.offset_y))
 
     def update(self, selected_object):
+        self.tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
+        self.tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
+
         self.selected_object = selected_object
         # if self.selected_object == 'shovel':
         #     if self.facing == 'down':
@@ -108,11 +117,16 @@ class Player(pygame.sprite.Sprite):
             if direction == 'horizontal':
                 for sprite in self.obstacle_sprites:
                     if sprite.hitbox.colliderect(self.hitbox):
-                        if self.direction == 'right':
-                            self.hitbox.right = sprite.hitbox.left
-                        if self.direction == 'left':
-                            self.hitbox.left = sprite.hitbox.right
-                        self.direction = 'none'
+                        if sprite.name == 'dropped_item':
+                            # items.new_item = sprite.item_type
+                            # if inventory.is_full == False: sprite.kill()
+                            inventory.add_item(sprite.item_type, sprite)
+                        else:
+                            if self.direction == 'right':
+                                self.hitbox.right = sprite.hitbox.left
+                            if self.direction == 'left':
+                                self.hitbox.left = sprite.hitbox.right
+                            self.direction = 'none'
                         return True
                 for sprite in tiles.tile_collisions_group:
                     if sprite.hitbox.colliderect(self.hitbox):
@@ -125,11 +139,16 @@ class Player(pygame.sprite.Sprite):
             elif direction == 'vertical':
                 for sprite in self.obstacle_sprites:
                     if sprite.hitbox.colliderect(self.hitbox):
-                        if self.direction == 'up':
-                            self.hitbox.top = sprite.hitbox.bottom
-                        if self.direction == 'down':
-                            self.hitbox.bottom = sprite.hitbox.top
-                        self.direction = 'none'
+                        if sprite.name == 'dropped_item':
+                            # items.new_item = sprite.item_type
+                            # if inventory.is_full == False: sprite.kill()
+                            inventory.add_item(sprite.item_type, sprite)
+                        else:
+                            if self.direction == 'up':
+                                self.hitbox.top = sprite.hitbox.bottom
+                            if self.direction == 'down':
+                                self.hitbox.bottom = sprite.hitbox.top
+                            self.direction = 'none'
                         return True
                 for sprite in tiles.tile_collisions_group:
                     if sprite.hitbox.colliderect(self.hitbox):
@@ -150,6 +169,8 @@ class Player(pygame.sprite.Sprite):
             self.create_path()
         if keys[pygame.K_SPACE] and self.selected_object == items.hoe:
             self.create_farmland()
+        if keys[pygame.K_SPACE] and self.selected_object == items.axe:
+            self.chop_tree()
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = 'left'
@@ -191,25 +212,36 @@ class Player(pygame.sprite.Sprite):
             self.screen.blit(frames[int(self.dig_animation_index)], (x * config.TILE_WIDTH - self.offset_x, y * config.TILE_WIDTH - self.offset_y))
             #map.overworld[y][x] = self.frames[int(self.animation_index)]
 
+    def chop_tree(self):
+        if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
+            if map.overworld[self.tile_y - 1][self.tile_x] == 't':
+                map.overworld[self.tile_y - 1][self.tile_x] = '0'
+                for sprite in sprites.obstacle_sprites:
+                    if sprite.name == 'tree':
+                        sprite.kill()
+                for sprite in sprites.visible_sprites:
+                    if sprite.name == 'tree':
+                        sprite.kill()
+                        
+                tiles.create_objects()
+                items.dropped_item(self.tile_x, self.tile_y, items.wood)
+                print('chopping tree')
+
     # Check if there are any repetitive parts in here
     def create_path(self):
-        tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
-        tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
 
-        if tile_x >= 0 and tile_x < len(map.overworld[0]) - 1 and tile_y >= 0 and tile_y < len(map.overworld) - 1:
+        if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
 
-            if map.overworld[tile_y][tile_x] == '0':
-                self.dig_animation(tile_x, tile_y, self.path_dig_frames, '1')
+            if map.overworld[self.tile_y][self.tile_x] == '0':
+                self.dig_animation(self.tile_x, self.tile_y, self.path_dig_frames, '1')
                 if self.facing == 'right': self.animation(self.shovel_right_frames)
                 #map.overworld[tile_y][tile_x] = '1'
 
     def create_farmland(self):
-        tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
-        tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
 
-        if tile_x >= 0 and tile_x < len(map.overworld[0]) - 1 and tile_y >= 0 and tile_y < len(map.overworld) - 1:
-            if map.overworld[tile_y][tile_x] == '0':
-                self.dig_animation(tile_x, tile_y, self.farmland_dig_frames, 'f')
+        if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
+            if map.overworld[self.tile_y][self.tile_x] == '0':
+                self.dig_animation(self.tile_x, self.tile_y, self.farmland_dig_frames, 'f')
 
     def move(self):
 
