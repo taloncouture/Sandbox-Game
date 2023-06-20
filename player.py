@@ -70,6 +70,8 @@ class Player(pygame.sprite.Sprite):
         self.obstacle_sprites = sprites.obstacle_sprites
         self.visible_sprites = sprites.visible_sprites
 
+        self.key_pressed_index = 0
+
     def get_offset_x(self):
         return self.offset_x
     def get_offset_y(self):
@@ -170,7 +172,14 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE] and self.selected_object == items.hoe:
             self.create_farmland()
         if keys[pygame.K_SPACE] and self.selected_object == items.axe:
-            self.chop_tree()
+            self.key_pressed_index += 0.05
+            if self.key_pressed_index > 1:
+                self.chop_tree()
+                self.key_pressed_index = 0
+
+        if self.key_pressed_index > 0:
+            self.key_pressed_index -= 0.01
+        else: self.key_pressed_index = 0
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = 'left'
@@ -225,7 +234,6 @@ class Player(pygame.sprite.Sprite):
                         
                 tiles.create_objects()
                 items.dropped_item(self.tile_x, self.tile_y, items.wood)
-                print('chopping tree')
 
     # Check if there are any repetitive parts in here
     def create_path(self):

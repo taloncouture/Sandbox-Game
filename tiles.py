@@ -75,7 +75,7 @@ def create_objects():
     for y in range(len(map.overworld)):
         for x in range(len(map.overworld[y])):
             if map.overworld[y][x] == 't':
-                tree_object = tree.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
+                tree_object = sprites.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
                 sprites.obstacle_sprites.add(tree_object)
                 sprites.visible_sprites.add(tree_object)
 
