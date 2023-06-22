@@ -14,6 +14,7 @@ def crop(surface, num_x, num_y):
 
     #return [surface.subsurface(0, 0, config.TILE_WIDTH, config.TILE_WIDTH), surface.subsurface(config.TILE_WIDTH, 0, config.TILE_WIDTH, config.TILE_WIDTH), surface.subsurface(0, config.TILE_WIDTH, config.TILE_WIDTH, config.TILE_WIDTH), surface.subsurface(config.TILE_WIDTH, config.TILE_WIDTH, config.TILE_WIDTH, config.TILE_WIDTH)]
 
+# Ground Tiles
 path_center = pygame.transform.scale(pygame.image.load('Textures/path/path_center.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 path_corner = pygame.transform.scale(pygame.image.load('Textures/path/path_corners.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
 path_corners = crop(path_corner, 2, 2)
@@ -57,24 +58,36 @@ path_images = [path_center, path_corners, path_corners, path_one_sided, path_two
 water_images = [water_center, water_corners, water_corners, water_one_sided, water_two_sided, water_three_sided, water_four_sided]
 farmland_images = [farmland_center, farmland_corners, farmland_corners_solid, farmland_one_sided, farmland_two_sided, farmland_three_sided, farmland_four_sided]
 
+
+# Blocks
+crafting_bench = {"material": 'wood', "image":pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+
+
+# Maps
+overworld_layers = [map.overworld, map.overworld_layer_1]
+
+
 # Handles all the collisions with tiles that need it by making hitboxes -- maybe too many arguments here
 class Tile_Collisions(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, surface, x_offset, y_offset):
+    def __init__(self, x, y, width, height, surface, x_offset, y_offset, name):
         super().__init__()
         self.x = x * config.TILE_WIDTH
         self.y = y * config.TILE_WIDTH
         self.width = width
         self.height = height
 
-        self.hitbox = pygame.Rect(self.x - x_offset + (self.width / 3), self.y - y_offset, self.width / 2, self.height / 2)
+        if name == 'water':
+            self.hitbox = pygame.Rect(self.x - x_offset, self.y - y_offset, self.width / 2, self.height / 2)
+        if name == 'crafting bench':
+            self.hitbox = pygame.Rect(self.x - x_offset, self.y - y_offset, self.width, self.height / 2)
 
 tile_collisions_group = pygame.sprite.Group()
 
 # Creates objects like trees by scanning through the overworld map -- arguments could be improved and also change the map so that it could be a variable
 def create_objects():
-    for y in range(len(map.overworld)):
-        for x in range(len(map.overworld[y])):
-            if map.overworld[y][x] == 't':
+    for y in range(len(overworld_layers[0])):
+        for x in range(len(overworld_layers[0][y])):
+            if overworld_layers[0][y][x] == 't':
                 tree_object = sprites.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
                 sprites.obstacle_sprites.add(tree_object)
                 sprites.visible_sprites.add(tree_object)
@@ -84,7 +97,7 @@ def TileID(id, x, y, area, surface, x_offset, y_offset):
     if id == '0': return grass
     if id == '1': return create_path(id, x, y, area, path_images)
     if id == 'w': 
-        water_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, surface, x_offset, y_offset)
+        water_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, surface, x_offset, y_offset, 'water')
         tile_collisions_group.add(water_collisions)
         return create_path(id, x, y, area, water_images)
     if id == 't':
@@ -93,6 +106,18 @@ def TileID(id, x, y, area, surface, x_offset, y_offset):
         return grass
     if id == 'f':
         return create_path(id, x, y, area, farmland_images)
+    
+    if id == 'c':
+        crafting_bench_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, surface, x_offset, y_offset, 'crafting bench')
+        tile_collisions_group.add(crafting_bench_collisions)
+        return crafting_bench.get("image")
+
+def is_placeable(x, y, area):
+    if area[0][y][x] == '0' or area[0][y][x] == '1' or area[0][y][x] == 'f':
+        if area[1][y][x] == ' ':
+            return True
+    return False
+
 
 # This checks if there are any tiles next to it so that it can change the texture of the tile for design purposed
 def create_path(id, x, y, area, images):

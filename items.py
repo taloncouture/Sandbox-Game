@@ -6,6 +6,7 @@ shovel = {"name": 'Shovel', "type": 'tool', "image": pygame.transform.scale(pyga
 hoe = {"name": 'Hoe', "type": 'tool', "image": pygame.transform.scale(pygame.image.load('Textures/items/hoe.png'), (config.ITEM_WIDTH, config.ITEM_WIDTH))}
 axe = {"name": 'Axe', "type": 'tool', "image": pygame.transform.scale(pygame.image.load('Textures/items/axe.png'), (config.ITEM_WIDTH, config.ITEM_WIDTH))}
 wood = {"name": 'Wood', "type": 'item', "amount_min": 3, "amount_max": 5, "image": pygame.transform.scale(pygame.image.load('Textures/items/wood.png'), (config.ITEM_WIDTH, config.ITEM_WIDTH))}
+crafting_bench = {"name": 'Crafting Bench', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.ITEM_WIDTH, config.ITEM_WIDTH))}
 
 new_item = 'none'
 selected_item = 'none'

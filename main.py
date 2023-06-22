@@ -82,9 +82,11 @@ while True:
     y_offset = player_object.get_offset_y()
 
     # The loop that draws the tiles on the screen each frame -- has a lot of arguments that may be unnecessary
-    for y in range(len(map.overworld)):
-        for x in range(len(map.overworld[y])):
-            screen.blit(tiles.TileID(map.overworld[y][x], x, y, map.overworld, screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
+    for m in range(len(map.overworld_layers)):
+        for y in range(len(map.overworld)):
+            for x in range(len(map.overworld[y])):
+                if map.overworld_layers[m][y][x] != ' ':
+                    screen.blit(tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld, screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
 
     # Reorganize this a bit -- seems to be repetitive
     if inventory_opened == False:

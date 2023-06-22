@@ -7,14 +7,14 @@ import random
 slots = [
     [items.hoe, items.shovel, items.axe],
     [items.wood, 'empty', 'empty'],
-    ['empty', items.wood, items.wood],
+    ['empty', 'empty', items.crafting_bench],
     ['empty', 'empty', 'empty']
 ]
 
 slots_amounts = [
     [0, 0, 0],
     [2, 0, 0],
-    [0, 5, 1],
+    [0, 0, 1],
     [0, 0, 0]
 ]
 
@@ -97,6 +97,11 @@ def add_item(item, sprite):
                     items.new_item = 'none'
                     sprite.kill()
                     return
+                
+def remove_item():
+    slots_amounts[3][items.toolbar_selected_slot] -= 1
+    if slots_amounts[3][items.toolbar_selected_slot] == 0:
+        slots[3][items.toolbar_selected_slot] = 'empty'
 
 
 def draw_items(screen):
@@ -149,7 +154,8 @@ def mouse_update(state):
         if in_bounds() and slots[slot_y][slot_x] == 'empty':
             slots[slot_y][slot_x] = items.selected_item
             slots_amounts[slot_y][slot_x] = slots_amounts[items.last_slot[1]][items.last_slot[0]]
-            slots_amounts[items.last_slot[1]][items.last_slot[0]] = 0
+            if (slot_y, slot_x) != (items.last_slot[1], items.last_slot[0]):
+                slots_amounts[items.last_slot[1]][items.last_slot[0]] = 0
         elif in_bounds() and slots[slot_y][slot_x].get('name') == items.selected_item.get('name'):
             slots_amounts[slot_y][slot_x] += slots_amounts[items.last_slot[1]][items.last_slot[0]]
         elif items.selected_item != 'none':

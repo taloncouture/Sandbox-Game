@@ -83,11 +83,12 @@ class Player(pygame.sprite.Sprite):
         
         self.screen.blit(self.outline, ((tile_x + x_diff) * config.TILE_WIDTH - self.offset_x, (tile_y + y_diff) * config.TILE_WIDTH - self.offset_y))
 
-    def update(self, selected_object):
+    def update(self, selected_item):
         self.tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
         self.tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
 
-        self.selected_object = selected_object
+        self.selected_object = selected_item
+        
         # if self.selected_object == 'shovel':
         #     if self.facing == 'down':
         #         self.highlight_tile(0, 1)
@@ -97,20 +98,21 @@ class Player(pygame.sprite.Sprite):
         #         self.highlight_tile(1, 0)
         #     if self.facing == 'left':
         #         self.highlight_tile(-1, 0)
-        if self.selected_object == items.shovel or self.selected_object == items.hoe or self.selected_object == items.axe:
-            if self.facing == 'down':
-                self.highlighted_tile_y = 1
-                self.highlighted_tile_x = 0
-            if self.facing == 'up':
-                self.highlighted_tile_y = -1
-                self.highlighted_tile_x = 0
-            if self.facing == 'right':
-                self.highlighted_tile_x = 1
-                self.highlighted_tile_y = 0
-            if self.facing == 'left':
-                self.highlighted_tile_x = -1
-                self.highlighted_tile_y = 0
-            self.highlight_tile(self.highlighted_tile_x, self.highlighted_tile_y)
+        if self.selected_object != 'empty':
+            if self.selected_object == items.shovel or self.selected_object == items.hoe or self.selected_object == items.axe or self.selected_object.get("type") == 'block':
+                if self.facing == 'down':
+                    self.highlighted_tile_y = 1
+                    self.highlighted_tile_x = 0
+                if self.facing == 'up':
+                    self.highlighted_tile_y = -1
+                    self.highlighted_tile_x = 0
+                if self.facing == 'right':
+                    self.highlighted_tile_x = 1
+                    self.highlighted_tile_y = 0
+                if self.facing == 'left':
+                    self.highlighted_tile_x = -1
+                    self.highlighted_tile_y = 0
+                self.highlight_tile(self.highlighted_tile_x, self.highlighted_tile_y)
 
         self.input()
         self.move()
@@ -176,6 +178,9 @@ class Player(pygame.sprite.Sprite):
             if self.key_pressed_index > 1:
                 self.chop_tree()
                 self.key_pressed_index = 0
+        if self.selected_object != 'empty':
+            if keys[pygame.K_SPACE] and self.selected_object.get("type") == 'block':
+                self.place_block()
 
         if self.key_pressed_index > 0:
             self.key_pressed_index -= 0.01
@@ -250,6 +255,12 @@ class Player(pygame.sprite.Sprite):
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
             if map.overworld[self.tile_y][self.tile_x] == '0':
                 self.dig_animation(self.tile_x, self.tile_y, self.farmland_dig_frames, 'f')
+
+    def place_block(self):
+        if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
+            if tiles.is_placeable(self.tile_x, self.tile_y, map.overworld_layers):
+                map.overworld_layers[1][self.tile_y][self.tile_x] = 'c'
+                inventory.remove_item()
 
     def move(self):
 
