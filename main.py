@@ -5,7 +5,6 @@ import config
 import player
 import map
 import inventory
-import tree
 import sprites
 import items
 
@@ -40,7 +39,18 @@ player_group.add(player_object)
 sprites.visible_sprites.add(player_object)
 
 # Calls the create_objects function which making objects like trees -- can be improved with the passing of the sprite groups in as arguments
-tiles.create_objects()
+
+current_level = 'overworld'
+def initalize_level(area):
+    tiles.create_level(area)
+    tiles.create_objects_random(area, 'tree', 20)
+    for y in range(len(area[1])):
+        for x in range(len(area[1][y])):
+            if area[1][y][x] == 'p':
+                player_object.set_location(x * config.TILE_WIDTH, y * config.TILE_WIDTH)
+
+
+initalize_level(map.overworld_layers)
 
 while True:
     for event in pygame.event.get():
@@ -85,9 +95,9 @@ while True:
     for m in range(len(map.overworld_layers)):
         for y in range(len(map.overworld)):
             for x in range(len(map.overworld[y])):
-                if map.overworld_layers[m][y][x] != ' ':
+                if map.overworld_layers[m][y][x] != ' ' and map.overworld_layers[m][y][x] != 'p':
                     screen.blit(tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld, screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
-
+    
     # Reorganize this a bit -- seems to be repetitive
     if inventory_opened == False:
 

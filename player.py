@@ -72,10 +72,16 @@ class Player(pygame.sprite.Sprite):
 
         self.key_pressed_index = 0
 
+        self.current_level = 'overworld'
+
     def get_offset_x(self):
         return self.offset_x
     def get_offset_y(self):
         return self.offset_y
+    
+    def set_location(self, x, y):
+        self.offset_x = x - config.SCREEN_WIDTH
+        self.offset_y = y - config.SCREEN_HEIGHT
     
     def highlight_tile(self, x_diff, y_diff):
         tile_x = int((self.x + self.width / 2 ) / config.TILE_WIDTH)

@@ -1,5 +1,0 @@
-import pygame
-import config
-
-
-

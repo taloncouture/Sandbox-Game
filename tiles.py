@@ -1,8 +1,9 @@
 import pygame
+import random
 import config
-import tree
 import map
 import sprites
+import terrain
 
 # Put in the x and y width and height (0 is not included) and this goes from left to right and then top to bottom (like reading a book)
 def crop(surface, num_x, num_y):
@@ -29,7 +30,9 @@ path_four_sided = crop(path_four_sided_overall, 4, 4)
 
 water_center = pygame.transform.scale(pygame.image.load('Textures/water/water_center.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 water_corner = pygame.transform.scale(pygame.image.load('Textures/water/water_corners.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
+water_corner_solid = pygame.transform.scale(pygame.image.load('Textures/water/water_corners_solid.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
 water_corners = crop(water_corner, 2, 2)
+water_corners_solid = crop(water_corner_solid, 2, 2)
 water_one_sided_overall = pygame.transform.scale(pygame.image.load('Textures/water/water_one_sided.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH * 2))
 water_one_sided = crop(water_one_sided_overall, 2, 2)
 water_two_sided_overall = pygame.transform.scale(pygame.image.load('Textures/water/water_two_sided.png'), (config.TILE_WIDTH * 2, config.TILE_WIDTH))
@@ -55,7 +58,7 @@ farmland_four_sided = crop(farmland_four_sided_overall, 4, 4)
 
 
 path_images = [path_center, path_corners, path_corners, path_one_sided, path_two_sided, path_three_sided, path_four_sided]
-water_images = [water_center, water_corners, water_corners, water_one_sided, water_two_sided, water_three_sided, water_four_sided]
+water_images = [water_center, water_corners, water_corners_solid, water_one_sided, water_two_sided, water_three_sided, water_four_sided]
 farmland_images = [farmland_center, farmland_corners, farmland_corners_solid, farmland_one_sided, farmland_two_sided, farmland_three_sided, farmland_four_sided]
 
 
@@ -84,11 +87,13 @@ class Tile_Collisions(pygame.sprite.Sprite):
 tile_collisions_group = pygame.sprite.Group()
 
 # Creates objects like trees by scanning through the overworld map -- arguments could be improved and also change the map so that it could be a variable
-def create_objects():
-    for y in range(len(overworld_layers[0])):
-        for x in range(len(overworld_layers[0][y])):
-            if overworld_layers[0][y][x] == 't':
-                tree_object = sprites.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
+def create_objects_random(area, type, number):
+    if type == 'tree':
+        for i in range(number):
+            x_loc = random.randint(0, len(area[1][0]) - 2)
+            y_loc = random.randint(0, len(area[1]) - 2)
+            if area[0][y_loc + 1][x_loc] == '0' and area[1][y_loc + 1][x_loc] == ' ':
+                tree_object = sprites.Tree(x_loc, y_loc, config.TILE_WIDTH, config.TILE_WIDTH * 2)
                 sprites.obstacle_sprites.add(tree_object)
                 sprites.visible_sprites.add(tree_object)
 
@@ -118,6 +123,24 @@ def is_placeable(x, y, area):
             return True
     return False
 
+
+def create_pond(area, num):
+    for i in range(num):
+        pond = terrain.create_terrain(8, 8, 30)
+
+        x_loc = random.randint(0, len(area[0][0]) - 11)
+        y_loc = random.randint(0, len(area[0]) - 11)
+
+        for y in range(len(pond)):
+            for x in range(len(pond[y])):
+                #print(x, y)
+                if pond[y][x] == '#' and area[1][y_loc][x_loc] != 'p':
+                    #print(x, y)
+                    area[0][y + y_loc][x + x_loc] = 'w'
+                
+
+def create_level(area):
+    create_pond(area, 3)
 
 # This checks if there are any tiles next to it so that it can change the texture of the tile for design purposed
 def create_path(id, x, y, area, images):
