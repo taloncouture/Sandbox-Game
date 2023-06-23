@@ -11,19 +11,21 @@ import inventory
 class Player(pygame.sprite.Sprite):
     
     # Check if there are any unnecessary lines in here
-    def __init__(self, x, y, width, height, screen):
+    def __init__(self, width, height, screen):
         super().__init__()
-        self.x = x
-        self.y = y
+        self.x = 0
+        self.y = 0
         self.width = width
         self.height = height
 
         self.name = 'player'
 
+        # self.offset_x = int((config.SCREEN_WIDTH / 2) - self.x)
+        # self.offset_y = int((config.SCREEN_HEIGHT / 2) - self.y)
         self.offset_x = 0
         self.offset_y = 0
 
-        self.speed = 3
+        self.speed = 5
 
         self.image = pygame.transform.scale(pygame.image.load('Textures/player_states/front_0.png'), (self.width, self.height))
         self.rect = self.image.get_rect()
@@ -46,10 +48,11 @@ class Player(pygame.sprite.Sprite):
         self.shovel_right_frames = [shovel_right_0, shovel_right_1]
         self.animation_index = 0
 
-        self.rect.x = self.x
-        self.rect.y = self.y
+        self.rect.centerx = config.SCREEN_WIDTH / 2
+        self.rect.centery = config.SCREEN_HEIGHT / 2
 
-        self.hitbox = self.rect.inflate(0, -20)
+        self.hitbox = self.rect.inflate(-6, -32)
+        self.move_direction = [0, 0]
 
         self.screen = screen
 
@@ -64,6 +67,7 @@ class Player(pygame.sprite.Sprite):
         self.facing = 'down'
 
         self.dig_animation_index = 0
+        self.break_animation_index = 0
         self.path_dig_frames = animations.path_dig_frames
         self.farmland_dig_frames = animations.farmland_dig_frames
 
@@ -80,8 +84,9 @@ class Player(pygame.sprite.Sprite):
         return self.offset_y
     
     def set_location(self, x, y):
-        self.offset_x = x - config.SCREEN_WIDTH
-        self.offset_y = y - config.SCREEN_HEIGHT
+        self.hitbox.x = x
+        self.hitbox.y = y
+
     
     def highlight_tile(self, x_diff, y_diff):
         tile_x = int((self.x + self.width / 2 ) / config.TILE_WIDTH)
@@ -90,8 +95,14 @@ class Player(pygame.sprite.Sprite):
         self.screen.blit(self.outline, ((tile_x + x_diff) * config.TILE_WIDTH - self.offset_x, (tile_y + y_diff) * config.TILE_WIDTH - self.offset_y))
 
     def update(self, selected_item):
+
         self.tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
         self.tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
+
+        self.x = self.rect.x
+        self.y = self.rect.y
+
+        #print(self.tile_x, self.tile_y)
 
         self.selected_object = selected_item
         
@@ -132,21 +143,22 @@ class Player(pygame.sprite.Sprite):
                             # if inventory.is_full == False: sprite.kill()
                             inventory.add_item(sprite.item_type, sprite)
                         else:
-                            if self.direction == 'right':
+                            if self.move_direction[0] == 1:
                                 self.hitbox.right = sprite.hitbox.left
-                            if self.direction == 'left':
+                            if self.move_direction[0] == -1:
                                 self.hitbox.left = sprite.hitbox.right
                             self.direction = 'none'
                         return True
                 for sprite in tiles.tile_collisions_group:
                     if sprite.hitbox.colliderect(self.hitbox):
-                        if self.direction == 'right':
+                        if self.move_direction[0] == 1:
                             self.hitbox.right = sprite.hitbox.left
-                        if self.direction == 'left':
+                        if self.move_direction[0] == -1:
                             self.hitbox.left = sprite.hitbox.right
                         self.direction = 'none'
                         return True
-            elif direction == 'vertical':
+            
+            if direction == 'vertical':
                 for sprite in self.obstacle_sprites:
                     if sprite.hitbox.colliderect(self.hitbox):
                         if sprite.name == 'dropped_item':
@@ -154,17 +166,17 @@ class Player(pygame.sprite.Sprite):
                             # if inventory.is_full == False: sprite.kill()
                             inventory.add_item(sprite.item_type, sprite)
                         else:
-                            if self.direction == 'up':
+                            if self.move_direction[1] == -1:
                                 self.hitbox.top = sprite.hitbox.bottom
-                            if self.direction == 'down':
+                            if self.move_direction[1] == 1:
                                 self.hitbox.bottom = sprite.hitbox.top
                             self.direction = 'none'
                         return True
                 for sprite in tiles.tile_collisions_group:
                     if sprite.hitbox.colliderect(self.hitbox):
-                        if self.direction == 'up':
+                        if self.move_direction[1] == -1:
                             self.hitbox.top = sprite.hitbox.bottom
-                        if self.direction == 'down':
+                        if self.move_direction[1] == 1:
                             self.hitbox.bottom = sprite.hitbox.top
                         self.direction = 'none'
                         return True
@@ -195,25 +207,33 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.direction = 'left'
             self.facing = 'left'
+            self.move_direction[0] = -1
             #self.hitbox = self.rect.inflate(-20, -20)
             self.animation(self.left_frames)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.direction = 'right'
             self.facing = 'right'
+            self.move_direction[0] = 1
             #self.hitbox = self.rect.inflate(-20, -20)
             self.animation(self.right_frames)
-        elif keys[pygame.K_UP] or keys[pygame.K_w]:
+        else:
+            self.move_direction[0] = 0
+
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
             self.direction = 'up'
             self.facing = 'up'
+            self.move_direction[1] = -1
             #self.hitbox = self.rect.inflate(0, -20)
             self.animation(self.up_frames)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.direction = 'down'
             self.facing = 'down'
+            self.move_direction[1] = 1
             #self.hitbox = self.rect.inflate(0, -20)
             self.animation(self.down_frames)
         else:
             self.direction = 'none'
+            self.move_direction[1] = 0
 
     # Animates by cycling through an array of frames
     def animation(self, frames):
@@ -221,6 +241,14 @@ class Player(pygame.sprite.Sprite):
         if self.animation_index >= len(frames):
             self.animation_index = 0
         self.image = frames[int(self.animation_index)]
+
+    def break_animation(self, x, y, result, area):
+        self.break_animation_index += 0.1
+        if self.break_animation_index > len(animations.break_frames):
+            self.break_animation_index = 0
+            area[y][x] = result
+        else:
+            self.screen.blit(animations.break_frames[int(self.break_animation_index)], (x * config.TILE_WIDTH - self.offset_x, y * config.TILE_WIDTH - self.offset_y))
 
     # Maybe this could merge with the regular animation
     def dig_animation(self, x, y, frames, result):
@@ -235,7 +263,7 @@ class Player(pygame.sprite.Sprite):
     def chop_tree(self):
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
             if map.overworld[self.tile_y - 1][self.tile_x] == 't':
-                map.overworld[self.tile_y - 1][self.tile_x] = '0'
+                self.break_animation(self.tile_x, self.tile_y, '0', map.get_level(self.current_level)[0])
                 for sprite in sprites.obstacle_sprites:
                     if sprite.name == 'tree':
                         sprite.kill()
@@ -252,7 +280,8 @@ class Player(pygame.sprite.Sprite):
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
 
             if map.overworld[self.tile_y][self.tile_x] == '0':
-                self.dig_animation(self.tile_x, self.tile_y, self.path_dig_frames, '1')
+                #self.dig_animation(self.tile_x, self.tile_y, self.path_dig_frames, '1')
+                self.break_animation(self.tile_x, self.tile_y, '1', map.get_level(self.current_level)[0])
                 if self.facing == 'right': self.animation(self.shovel_right_frames)
                 #map.overworld[tile_y][tile_x] = '1'
 
@@ -260,7 +289,7 @@ class Player(pygame.sprite.Sprite):
 
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
             if map.overworld[self.tile_y][self.tile_x] == '0':
-                self.dig_animation(self.tile_x, self.tile_y, self.farmland_dig_frames, 'f')
+                self.break_animation(self.tile_x, self.tile_y, 'f', map.get_level(self.current_level)[0])
 
     def place_block(self):
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
@@ -269,51 +298,47 @@ class Player(pygame.sprite.Sprite):
                 inventory.remove_item()
 
     def move(self):
+        # if self.move_direction[0] == -1:
+        #     self.hitbox.x -= self.speed
+        #     self.collision('horizontal')
+        # if self.move_direction[0] == 1:
+        #     self.hitbox.x += self.speed
+        #     self.collision('horizontal')
+        multiplier = 1
+        if self.move_direction[0] != 0 and self.move_direction[1] != 0:
+            multiplier = 1.414
 
-        # Probably could be condensed -- ALSO THERE ARE STILL SOME COLLISION GLITCHES
-        if self.direction == 'left':
-            if self.offset_x >= 0 and self.rect.x <= self.center_x - self.width / 2:
-                self.offset_x -= 3
-                #self.x -= 3
-            elif self.rect.x >= 0:
-                self.hitbox.x -= 3
-                #self.x -= 3
-
-            self.collision('horizontal')
-
-        if self.direction == 'right':
-            if self.offset_x <= config.SCREEN_WIDTH and self.rect.x >= self.center_x - self.width / 2:
-                self.offset_x += 3
-                #self.x += 3
-            elif self.rect.x + self.width <= config.SCREEN_WIDTH:
-                self.hitbox.x += 3 
-                #self.x += 3
-
-            self.collision('horizontal')
-
-        if self.direction == 'up':
-            if self.offset_y >= 0 and self.rect.y <= self.center_y - self.height / 2: 
-                self.offset_y -= 3
-                #self.y -= 3
-            elif self.rect.y >= 0:
-                self.hitbox.y -= 3
-                #self.y -= 3
-
-            self.collision('vertical')
-
-        if self.direction == 'down':
-            if self.offset_y <= config.SCREEN_HEIGHT and self.rect.y >= self.center_y - self.height / 2:
-                self.offset_y += 3
-                #self.y += 3
-            elif self.rect.y + self.height <= config.SCREEN_HEIGHT:
-                self.hitbox.y += 3
-                #self.y += 3
-
-            self.collision('vertical')
+        self.hitbox.x += self.move_direction[0] * self.speed / multiplier
+        self.collision('horizontal')
+        self.hitbox.y += self.move_direction[1] * self.speed / multiplier
+        self.collision('vertical')
         
+       
+
+        # if self.offset_x < 0:
+        #     self.offset_x = 0
+        # if self.offset_x > (config.MAP_WIDTH * config.TILE_WIDTH) - (config.SCREEN_WIDTH):
+        #     self.offset_x = (config.MAP_WIDTH * config.TILE_WIDTH) - (config.SCREEN_WIDTH)
+        # if self.offset_y < 0:
+        #     self.offset_y = 0
+        # if self.offset_y > (config.MAP_HEIGHT * config.TILE_WIDTH) - config.SCREEN_HEIGHT:
+        #     self.offset_y = (config.MAP_HEIGHT * config.TILE_WIDTH) - config.SCREEN_HEIGHT
+
         self.rect.center = self.hitbox.center
-        self.x = self.rect.x + self.offset_x
-        self.y = self.rect.y + self.offset_y
-        
+        self.offset_x = self.rect.centerx - (config.SCREEN_WIDTH / 2)
+        self.offset_y = self.rect.centery - (config.SCREEN_HEIGHT / 2)
+
+        if self.offset_x < 0:
+            self.offset_x = 0
+        if self.offset_y < 0:
+            self.offset_y = 0
+        if self.offset_x > (config.MAP_WIDTH * config.TILE_WIDTH) - config.SCREEN_WIDTH:
+            self.offset_x = (config.MAP_WIDTH * config.TILE_WIDTH) - config.SCREEN_WIDTH
+        if self.offset_y > (config.MAP_WIDTH * config.TILE_WIDTH) - config.SCREEN_HEIGHT:
+            self.offset_y = (config.MAP_WIDTH * config.TILE_WIDTH) - config.SCREEN_HEIGHT
+
+
+       
+       
 
         

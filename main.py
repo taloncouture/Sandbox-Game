@@ -32,7 +32,7 @@ pygame.display.set_caption("Sandbox Game")
 #inventory_image = pygame.transform.scale(pygame.image.load('Textures/inventory.png'), (config.TILE_WIDTH * 4, config.TILE_WIDTH * 3))
 inventory_opened = False
 
-player_object = player.Player(352, 352, 64, 64, screen)
+player_object = player.Player(64, 64, screen)
 player_group = pygame.sprite.GroupSingle()
 player_group.add(player_object)
 
@@ -91,29 +91,45 @@ while True:
     x_offset = player_object.get_offset_x()
     y_offset = player_object.get_offset_y()
 
+    screen.fill((0, 0, 0))
+
     # The loop that draws the tiles on the screen each frame -- has a lot of arguments that may be unnecessary
     for m in range(len(map.overworld_layers)):
         for y in range(len(map.overworld)):
             for x in range(len(map.overworld[y])):
-                if map.overworld_layers[m][y][x] != ' ' and map.overworld_layers[m][y][x] != 'p':
-                    screen.blit(tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld, screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
-    
+                if m == 0:
+                    screen.blit(tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld_layers[m], screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
+                if m > 0:
+                    # if map.overworld_layers[m][y][x] != ' ':
+                    #     if map.overworld_layers[m][y][x] != 'p':
+                    #         if map.overworld_layers[m][y][x] != 'c':
+                    tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld_layers[m], screen, x_offset, y_offset)
+                # else:
+                #     if map.overworld_layers[m][y][x] != ' ':
+                #         screen.blit(tiles.TileID(map.overworld_layers[m][y][x], x, y, map.overworld, screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
+
     # Reorganize this a bit -- seems to be repetitive
     if inventory_opened == False:
 
         player_group.update(inventory.slots[3][items.toolbar_selected_slot])
-        sprites.obstacle_sprites.update(x_offset, y_offset)
+        #sprites.obstacle_sprites.update(x_offset, y_offset)
         tiles.tile_collisions_group.empty()
 
     else:
         inventory.update(player_object.rect.x, player_object.rect.y, screen)
     
-    sprites.visible_sprites.draw(screen)
+    sprites.visible_sprites.draw(screen, player_object)
     if inventory_opened: 
         inventory.update(player_object.rect.x, player_object.rect.y, screen)
     else:
         #inventory_group.update(player_object.rect.x, player_object.rect.y)
         inventory.toolbar(screen)
+
+    pygame.draw.rect(screen, (0, 0, 255), pygame.Rect(player_object.hitbox.x - x_offset, player_object.hitbox.y - y_offset, player_object.hitbox.width, player_object.hitbox.height), 2)
+    for sprite in sprites.obstacle_sprites:
+            #pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(sprite.rect.x - x_offset, sprite.rect.y - y_offset, sprite.width, sprite.height), 2)
+            if sprite.name == 'tile':
+                sprite.kill()
 
     pygame.display.update()
     clock.tick(60)

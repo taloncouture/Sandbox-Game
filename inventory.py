@@ -52,13 +52,16 @@ inventory_font = pygame.font.Font('Textures/Fonts/8bitOperatorPlus8-Regular.ttf'
 
 def update(player_x, player_y, screen):
 
-    rect.x = player_x + config.TILE_WIDTH * 2
-    rect.y = player_y - config.TILE_WIDTH
+    # rect.x = player_x + config.TILE_WIDTH * 2
+    # rect.y = player_y - config.TILE_WIDTH
 
-    if rect.y < 0:
-        rect.y = 0
-    if rect.bottom > config.SCREEN_HEIGHT:
-        rect.bottom = config.SCREEN_HEIGHT
+    # if rect.y < 0:
+    #     rect.y = 0
+    # if rect.bottom > config.SCREEN_HEIGHT:
+    #     rect.bottom = config.SCREEN_HEIGHT
+
+    rect.x = (config.SCREEN_WIDTH / 2) - width / 2
+    rect.y = config.SCREEN_HEIGHT - height
 
     screen.blit(image, (rect.x, rect.y))
     draw_items(screen)

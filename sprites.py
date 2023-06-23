@@ -10,10 +10,13 @@ class YAwareGroup(pygame.sprite.Group):
         if sprite.name == 'dropped_item':
             result -= 1000000
         return result
-    def draw(self, surface):
+    def draw(self, surface, player):
+        x_offset = player.offset_x
+        y_offset = player.offset_y
+
         sprites = self.sprites()
         for sprite in sorted(sprites, key=self.by_y):
-            self.spritedict[sprite] = surface.blit(sprite.image, sprite.rect)
+            self.spritedict[sprite] = surface.blit(sprite.image, pygame.Rect(sprite.rect.x - x_offset, sprite.rect.y - y_offset, sprite.width, sprite.height))
 
 # Initalizing the visible sprites group
 visible_sprites = YAwareGroup()
@@ -41,6 +44,6 @@ class Tree(pygame.sprite.Sprite):
         self.y = y
 
     def update(self, x_offset, y_offset):
-        self.rect.x = (self.x * config.TILE_WIDTH) - x_offset
-        self.rect.y = (self.y * config.TILE_WIDTH) - y_offset
+        self.rect.x = (self.x * config.TILE_WIDTH)
+        self.rect.y = (self.y * config.TILE_WIDTH)
         self.hitbox.bottomright = (self.rect.x + self.width, self.rect.y + self.height - 20)
