@@ -27,16 +27,9 @@ class dropped_item(pygame.sprite.Sprite):
         self.rect.x = x * config.TILE_WIDTH + config.ITEM_OFFSET
         self.rect.y = y * config.TILE_WIDTH + config.ITEM_OFFSET
 
+        self.width = config.ITEM_WIDTH
+        self.height = config.ITEM_WIDTH
+
         self.hitbox = self.rect.inflate(-10, -10)
 
-        sprites.visible_sprites.add(self)
-        sprites.obstacle_sprites.add(self)
-
-
-    # Find a better way to do this
-    def update(self, x_offset, y_offset):
-        self.rect.x = (self.x * config.TILE_WIDTH + config.ITEM_OFFSET) - x_offset
-        self.rect.y = (self.y * config.TILE_WIDTH + config.ITEM_OFFSET) - y_offset
-        self.hitbox.x = self.rect.x
-        self.hitbox.y = self.rect.y
 

@@ -63,10 +63,13 @@ farmland_images = [farmland_center, farmland_corners, farmland_corners_solid, fa
 
 
 # Blocks
-crafting_bench = {"material": 'wood', "image":pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
-hedge_front = {"material": 'unbreakable', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_front2.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
-hedge_side = {"material": 'unbreakable', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_side.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+crafting_bench = {"material": 'wood', "type": 'block', "image":pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+hedge_front = {"material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_front2.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+hedge_side = {"material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_side.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
 hedge_images = [hedge_front, hedge_side]
+
+# Doors
+hedge_door = {"material": 'unbreakable', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_door_front.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
 
 # Maps
 overworld_layers = [map.overworld, map.overworld_layer_1]
@@ -76,26 +79,47 @@ overworld_layers = [map.overworld, map.overworld_layer_1]
 class Tile_Collisions(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, image, surface, x_offset, y_offset, name):
         super().__init__()
-        self.x = x * config.TILE_WIDTH
-        self.y = y * config.TILE_WIDTH
+        self.x = x
+        self.y = y
         self.width = width
         self.height = height
         self.image = image
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.rect = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
 
         self.name = 'tile'
 
         if name == 'water':
-            self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
+            self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
         if name == 'crafting bench':
-            self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
+            self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
         if name == 'hedge':
-            self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
+            self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
 
     def update(self, x_offset, y_offset):
         self.hitbox.topleft = self.x, self.y
 
 tile_collisions_group = pygame.sprite.Group()
+
+# def update_groups(area, x_offset, y_offset):
+#     for sprite in sprites.obstacle_sprites:
+#         if sprite.name != 'player':
+#             if sprite.rect.x < x_offset:
+#                 sprite.kill()
+
+#             if sprite.name == 'tree':
+#                 if area[1][sprite.y + 1][sprite.x] != 't':
+#                     sprite.kill()
+
+
+#     for sprite in sprites.visible_sprites:
+#         if sprite.name != 'player':
+#             if sprite.rect.x < x_offset:
+#                 sprite.kill()
+
+#             if sprite.name == 'tree':
+#                 if area[1][sprite.y + 1][sprite.x] != 't':
+#                     sprite.kill()
+                
 
 # Creates objects like trees by scanning through the overworld map -- arguments could be improved and also change the map so that it could be a variable
 def create_objects_random(area, type, number):
@@ -107,6 +131,18 @@ def create_objects_random(area, type, number):
                 tree_object = sprites.Tree(x_loc, y_loc, config.TILE_WIDTH, config.TILE_WIDTH * 2)
                 sprites.obstacle_sprites.add(tree_object)
                 sprites.visible_sprites.add(tree_object)
+                area[1][y_loc + 1][x_loc] = 't'
+
+def BlockID(id):
+    if id == 'H':
+        return hedge_door
+    if id == 'c':
+        return crafting_bench
+    if id == 'h':
+        return hedge_images[0]
+    
+    return hedge_images[0]
+    
 
 # This gets the tile id and returns the tile image which is drawn in main.py
 def TileID(id, x, y, area, surface, x_offset, y_offset):
@@ -116,10 +152,6 @@ def TileID(id, x, y, area, surface, x_offset, y_offset):
         water_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, create_path(id, x, y, area, water_images), surface, x_offset, y_offset, 'water')
         sprites.obstacle_sprites.add(water_collisions)
         return create_path(id, x, y, area, water_images)
-    if id == 't':
-        # tree_object = tree.Tree(x, y, config.TILE_WIDTH, config.TILE_WIDTH * 2)
-        # obstacle_sprites.add(tree_object)
-        return grass
     if id == 'f':
         return create_path(id, x, y, area, farmland_images)
     
@@ -133,6 +165,17 @@ def TileID(id, x, y, area, surface, x_offset, y_offset):
         sprites.obstacle_sprites.add(hedge_collisions)
         sprites.visible_sprites.add(hedge_collisions)
         return create_blocks(id, x, y, area, hedge_images)
+    
+    if id == 't':
+        tree_object = sprites.Tree(x, y - 1, config.TILE_WIDTH, config.TILE_WIDTH * 2)
+        sprites.obstacle_sprites.add(tree_object)
+        sprites.visible_sprites.add(tree_object)
+
+    if id == 'H':
+        hedge_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, hedge_door.get("image"), surface, x_offset, y_offset, 'hedge')
+        sprites.obstacle_sprites.add(hedge_collisions)
+        sprites.visible_sprites.add(hedge_collisions)
+        return hedge_door.get("image")
 
 def is_placeable(x, y, area):
     if area[0][y][x] == '0' or area[0][y][x] == '1' or area[0][y][x] == 'f':
@@ -157,7 +200,7 @@ def create_pond(area, num):
                 
 
 def create_level(area):
-    create_pond(area, 3)
+    create_pond(area, 20)
 
 
 def create_blocks(id, x, y, area, images):

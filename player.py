@@ -25,6 +25,12 @@ class Player(pygame.sprite.Sprite):
         self.offset_x = 0
         self.offset_y = 0
 
+        self.current_chunk_x = 0
+        self.current_chunk_y = 0
+
+        self.starting_x = 0
+        self.starting_y = 0
+
         self.speed = 5
 
         self.image = pygame.transform.scale(pygame.image.load('Textures/player_states/front_0.png'), (self.width, self.height))
@@ -47,6 +53,7 @@ class Player(pygame.sprite.Sprite):
         self.left_frames = [left_0, left_1]
         self.shovel_right_frames = [shovel_right_0, shovel_right_1]
         self.animation_index = 0
+        self.fade_animation_index = 0
 
         self.rect.centerx = config.SCREEN_WIDTH / 2
         self.rect.centery = config.SCREEN_HEIGHT / 2
@@ -63,8 +70,12 @@ class Player(pygame.sprite.Sprite):
         self.highlighted_tile_x = 0
         self.highlighted_tile_y = 0
 
+        self.facing_tile_x = 0
+        self.facing_tile_y = 0
+
         self.direction = 'none'
         self.facing = 'down'
+        self.facing_direction = [0, 0]
 
         self.dig_animation_index = 0
         self.break_animation_index = 0
@@ -76,7 +87,7 @@ class Player(pygame.sprite.Sprite):
 
         self.key_pressed_index = 0
 
-        self.current_level = 'overworld'
+        self.current_area = map.overworld_layers
 
     def get_offset_x(self):
         return self.offset_x
@@ -86,6 +97,8 @@ class Player(pygame.sprite.Sprite):
     def set_location(self, x, y):
         self.hitbox.x = x
         self.hitbox.y = y
+        self.starting_x = x
+        self.starting_y = y
 
     
     def highlight_tile(self, x_diff, y_diff):
@@ -96,8 +109,13 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, selected_item):
 
+        self.facing_tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.facing_direction[0]
+        self.facing_tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.facing_direction[1]
+
         self.tile_x = int((self.x + self.width / 2) / config.TILE_WIDTH) + self.highlighted_tile_x
         self.tile_y = int((self.y + self.height / 2) / config.TILE_WIDTH) + self.highlighted_tile_y
+
+        #print(self.tile_x, self.tile_y)
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -199,6 +217,15 @@ class Player(pygame.sprite.Sprite):
         if self.selected_object != 'empty':
             if keys[pygame.K_SPACE] and self.selected_object.get("type") == 'block':
                 self.place_block()
+        if keys[pygame.K_LSHIFT]:
+            if self.current_area[1][self.facing_tile_y][self.facing_tile_x] != ' ' and self.current_area[1][self.facing_tile_y][self.facing_tile_x] != 'p':
+                if tiles.BlockID(self.current_area[1][self.facing_tile_y][self.facing_tile_x]).get("type") == 'door':
+                    if self.current_area == map.overworld_layers:
+                        self.current_area = map.overworld2_layers
+                    else:
+                        self.current_area = map.overworld_layers
+        if keys[pygame.K_b]:
+            self.current_area = map.overworld_layers
 
         if self.key_pressed_index > 0:
             self.key_pressed_index -= 0.01
@@ -208,12 +235,16 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'left'
             self.facing = 'left'
             self.move_direction[0] = -1
+            self.facing_direction[0] = -1
+            self.facing_direction[1] = 0
             #self.hitbox = self.rect.inflate(-20, -20)
             self.animation(self.left_frames)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.direction = 'right'
             self.facing = 'right'
             self.move_direction[0] = 1
+            self.facing_direction[0] = 1
+            self.facing_direction[1] = 0
             #self.hitbox = self.rect.inflate(-20, -20)
             self.animation(self.right_frames)
         else:
@@ -223,12 +254,16 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'up'
             self.facing = 'up'
             self.move_direction[1] = -1
+            self.facing_direction[1] = -1
+            self.facing_direction[0] = 0
             #self.hitbox = self.rect.inflate(0, -20)
             self.animation(self.up_frames)
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.direction = 'down'
             self.facing = 'down'
             self.move_direction[1] = 1
+            self.facing_direction[1] = 1
+            self.facing_direction[0] = 0
             #self.hitbox = self.rect.inflate(0, -20)
             self.animation(self.down_frames)
         else:
@@ -250,6 +285,11 @@ class Player(pygame.sprite.Sprite):
         else:
             self.screen.blit(animations.break_frames[int(self.break_animation_index)], (x * config.TILE_WIDTH - self.offset_x, y * config.TILE_WIDTH - self.offset_y))
 
+    def fade_animation(self):
+        self.fade_animation_index += 1
+        self.screen.set_alpha(self.fade_animation_index)
+
+
     # Maybe this could merge with the regular animation
     def dig_animation(self, x, y, frames, result):
         self.dig_animation_index += 0.1
@@ -261,40 +301,44 @@ class Player(pygame.sprite.Sprite):
             #map.overworld[y][x] = self.frames[int(self.animation_index)]
 
     def chop_tree(self):
-        if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
-            if map.overworld[self.tile_y - 1][self.tile_x] == 't':
-                self.break_animation(self.tile_x, self.tile_y, '0', map.get_level(self.current_level)[0])
-                for sprite in sprites.obstacle_sprites:
-                    if sprite.name == 'tree':
-                        sprite.kill()
-                for sprite in sprites.visible_sprites:
-                    if sprite.name == 'tree':
-                        sprite.kill()
+        if self.tile_x >= 0 and self.tile_x < len(self.current_area[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(self.current_area[0]) - 1:
+            if self.current_area[1][self.tile_y][self.tile_x] == 't':
+                #self.break_animation(self.tile_x, self.tile_y, '0', map.get_level(self.current_level)[1])
+                self.current_area[1][self.tile_y][self.tile_x] = '0'
+                # for sprite in sprites.obstacle_sprites:
+                #     if sprite.name == 'tree':
+                #         sprite.kill()
+                # for sprite in sprites.visible_sprites:
+                #     if sprite.name == 'tree':
+                #         sprite.kill()
                         
-                tiles.create_objects()
-                items.dropped_item(self.tile_x, self.tile_y, items.wood)
+                #tiles.create_objects()
+                drop = items.dropped_item(self.tile_x, self.tile_y, items.wood)
+
+                sprites.obstacle_sprites.add(drop)
+                sprites.visible_sprites.add(drop)
 
     # Check if there are any repetitive parts in here
     def create_path(self):
 
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
 
-            if map.overworld[self.tile_y][self.tile_x] == '0':
+            if self.current_area[0][self.tile_y][self.tile_x] == '0':
                 #self.dig_animation(self.tile_x, self.tile_y, self.path_dig_frames, '1')
-                self.break_animation(self.tile_x, self.tile_y, '1', map.get_level(self.current_level)[0])
+                self.break_animation(self.tile_x, self.tile_y, '1', self.current_area[0])
                 if self.facing == 'right': self.animation(self.shovel_right_frames)
                 #map.overworld[tile_y][tile_x] = '1'
 
     def create_farmland(self):
 
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
-            if map.overworld[self.tile_y][self.tile_x] == '0':
-                self.break_animation(self.tile_x, self.tile_y, 'f', map.get_level(self.current_level)[0])
+            if self.current_area[0][self.tile_y][self.tile_x] == '0':
+                self.break_animation(self.tile_x, self.tile_y, 'f',self.current_area[0])
 
     def place_block(self):
         if self.tile_x >= 0 and self.tile_x < len(map.overworld[0]) - 1 and self.tile_y >= 0 and self.tile_y < len(map.overworld) - 1:
-            if tiles.is_placeable(self.tile_x, self.tile_y, map.overworld_layers):
-                map.overworld_layers[1][self.tile_y][self.tile_x] = 'c'
+            if tiles.is_placeable(self.tile_x, self.tile_y, self.current_area):
+                self.current_area[1][self.tile_y][self.tile_x] = 'c'
                 inventory.remove_item()
 
     def move(self):
@@ -312,7 +356,6 @@ class Player(pygame.sprite.Sprite):
         self.collision('horizontal')
         self.hitbox.y += self.move_direction[1] * self.speed / multiplier
         self.collision('vertical')
-        
        
 
         # if self.offset_x < 0:

@@ -19,3 +19,25 @@ break_0 = pygame.transform.scale(pygame.image.load('Textures/animations/break_st
 break_1 = pygame.transform.scale(pygame.image.load('Textures/animations/break_states/1.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 break_2 = pygame.transform.scale(pygame.image.load('Textures/animations/break_states/2.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 break_frames = [break_0, break_1, break_2]
+
+class Darkness:
+    def __init__(self):
+        self.display_surface = pygame.display.get_surface()
+        self.black_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT), flags=pygame.SRCALPHA)
+        self.alpha_index = 255
+        self.fading = False
+
+    def fade(self):
+        if self.fading == False:
+            self.fading = True
+
+    def display(self):
+        if self.fading == True:
+            self.alpha_index -= 5
+        if self.alpha_index <= -255:
+            self.alpha_index = 255
+            self.fading = False
+       
+
+        self.black_surface.fill((0, 0, 0, 255 - abs(self.alpha_index)))
+        self.display_surface.blit(self.black_surface, (0, 0))

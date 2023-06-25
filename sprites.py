@@ -6,9 +6,9 @@ obstacle_sprites = pygame.sprite.Group()
 # Class that sorts the sprites into an order based on y position for drawing overlaps
 class YAwareGroup(pygame.sprite.Group):
     def by_y(self, sprite):
-        result = sprite.rect.y
-        if sprite.name == 'dropped_item':
-            result -= 1000000
+        result = sprite.hitbox.y
+        # if sprite.name == 'dropped_item':
+        #     result -= 1000000
         return result
     def draw(self, surface, player):
         x_offset = player.offset_x
@@ -16,7 +16,8 @@ class YAwareGroup(pygame.sprite.Group):
 
         sprites = self.sprites()
         for sprite in sorted(sprites, key=self.by_y):
-            self.spritedict[sprite] = surface.blit(sprite.image, pygame.Rect(sprite.rect.x - x_offset, sprite.rect.y - y_offset, sprite.width, sprite.height))
+            if sprite.rect.x >= x_offset - sprite.width and sprite.rect.x <= x_offset + config.SCREEN_WIDTH and sprite.rect.y >= y_offset - sprite.height and sprite.rect.y <= y_offset + config.SCREEN_HEIGHT:
+                self.spritedict[sprite] = surface.blit(sprite.image, pygame.Rect(sprite.rect.x - x_offset, sprite.rect.y - y_offset, sprite.width, sprite.height))
 
 # Initalizing the visible sprites group
 visible_sprites = YAwareGroup()
@@ -42,8 +43,3 @@ class Tree(pygame.sprite.Sprite):
 
         self.x = x
         self.y = y
-
-    def update(self, x_offset, y_offset):
-        self.rect.x = (self.x * config.TILE_WIDTH)
-        self.rect.y = (self.y * config.TILE_WIDTH)
-        self.hitbox.bottomright = (self.rect.x + self.width, self.rect.y + self.height - 20)

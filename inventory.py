@@ -88,7 +88,6 @@ def add_item(item, sprite):
                 if slots[y][x] != 'empty':
                     if slots[y][x].get('name') == item.get('name'):
                         slots_amounts[y][x] += item_amount
-                        print('adding item')
                         items.new_item = 'none'
                         sprite.kill()
                         return
