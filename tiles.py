@@ -61,15 +61,27 @@ path_images = [path_center, path_corners, path_corners, path_one_sided, path_two
 water_images = [water_center, water_corners, water_corners_solid, water_one_sided, water_two_sided, water_three_sided, water_four_sided]
 farmland_images = [farmland_center, farmland_corners, farmland_corners_solid, farmland_one_sided, farmland_two_sided, farmland_three_sided, farmland_four_sided]
 
+stone_light = pygame.transform.scale(pygame.image.load('Textures/stone.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
+
+dark = pygame.transform.scale(pygame.image.load('Textures/blocks/stone/dark.png'), (config.TILE_WIDTH, config.TILE_WIDTH))
 
 # Blocks
-crafting_bench = {"material": 'wood', "type": 'block', "image":pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
-hedge_front = {"material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_front2.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
-hedge_side = {"material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_side.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stone_dark_front = {"name": 'dark_stone', "material": 'stone', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/stone/stone_dark_front.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stone_dark_side = {"name": 'dark_stone', "material": 'stone', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/stone/stone_dark_side.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stone_dark_images = [stone_dark_front, stone_dark_side]
+crafting_bench = {"name": 'crafting_bench', "material": 'wood', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/crafting_bench.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+hedge_front = {"name": 'hedge', "material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_front2.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+hedge_side = {"name": 'hedge', "material": 'unbreakable', "type": 'block', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_side.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
 hedge_images = [hedge_front, hedge_side]
 
 # Doors
-hedge_door = {"material": 'unbreakable', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_door_front.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+hedge_door = {"name": 'hedge_door', "material": 'unbreakable', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/blocks/hedge/hedge_door_front.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stairs_up = {"name": 'down_stair', "material": 'stone', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/stairs/stairs_up.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stairs_down = {"name": 'down_stair', "material": 'stone', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/stairs/stairs_down.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stairs_left = {"name": 'down_stair', "material": 'stone', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/stairs/stairs_left.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+stairs_right = {"name": 'down_stair', "material": 'stone', "type": 'door', "image": pygame.transform.scale(pygame.image.load('Textures/stairs/stairs_right.png'), (config.TILE_WIDTH, config.TILE_WIDTH))}
+
+stairs_images = [stairs_up, stairs_down, stairs_left, stairs_right]
 
 # Maps
 overworld_layers = [map.overworld, map.overworld_layer_1]
@@ -94,6 +106,8 @@ class Tile_Collisions(pygame.sprite.Sprite):
             self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
         if name == 'hedge':
             self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH, self.width, self.height)
+        if name == 'stairs':
+            self.hitbox = pygame.Rect(self.x * config.TILE_WIDTH, self.y * config.TILE_WIDTH - (config.TILE_WIDTH / 4), self.width, self.height)
 
     def update(self, x_offset, y_offset):
         self.hitbox.topleft = self.x, self.y
@@ -122,6 +136,18 @@ tile_collisions_group = pygame.sprite.Group()
                 
 
 # Creates objects like trees by scanning through the overworld map -- arguments could be improved and also change the map so that it could be a variable
+
+def check_surroundings(area, x, y, id):
+    try:
+        if area[y][x - 1] == id or area[y][x + 1] == id or area[y - 1][x] == id or area[y + 1][x] == id or area [y - 1][x - 1] == id or area[y - 1][x + 1] == id or area[y + 1][x - 1] == id or area[y + 1][x + 1] == id:
+            return True
+        else:
+            return False
+    except:
+        pass
+    else:
+       return False
+
 def create_objects_random(area, type, number):
     if type == 'tree':
         for i in range(number):
@@ -140,6 +166,10 @@ def BlockID(id):
         return crafting_bench
     if id == 'h':
         return hedge_images[0]
+    if id == 's':
+        return stairs_up
+    if id == '#':
+        return stone_dark_images[0]
     
     return hedge_images[0]
     
@@ -176,6 +206,28 @@ def TileID(id, x, y, area, surface, x_offset, y_offset):
         sprites.obstacle_sprites.add(hedge_collisions)
         sprites.visible_sprites.add(hedge_collisions)
         return hedge_door.get("image")
+    
+    if id == 's':
+        stairs_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, stairs_up.get("image"), surface, x_offset, y_offset, 'stairs')
+        sprites.obstacle_sprites.add(stairs_collisions)
+        sprites.visible_sprites.add(stairs_collisions)
+        return stairs_up.get("image")
+    
+    if id == '+':
+        return stone_light
+    
+    if id == '#':
+        if check_surroundings(area, x, y, ' ') == True:
+            stone_collisons = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, create_blocks(id, x, y, area, stone_dark_images), surface, x_offset, y_offset, 'hedge')
+            sprites.obstacle_sprites.add(stone_collisons)
+            sprites.visible_sprites.add(stone_collisons)
+            return create_blocks(id, x, y, area, stone_dark_images)
+        else:
+            dark_collisions = Tile_Collisions(x, y, config.TILE_WIDTH, config.TILE_WIDTH, dark, surface, x_offset, y_offset, 'hedge')
+            sprites.obstacle_sprites.add(dark_collisions)
+            sprites.visible_sprites.add(dark_collisions)
+            return dark
+
 
 def is_placeable(x, y, area):
     if area[0][y][x] == '0' or area[0][y][x] == '1' or area[0][y][x] == 'f':

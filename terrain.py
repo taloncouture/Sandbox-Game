@@ -10,9 +10,9 @@ def create_terrain(width, height, n):
     current_x = int(WIDTH / 2)
     current_y = int(HEIGHT / 2)
 
-    map = [[' ' for x in range(WIDTH)] for y in range(HEIGHT)]
+    map = [['#' for x in range(WIDTH)] for y in range(HEIGHT)]
 
-    map[current_y][current_x] = '#'
+    map[current_y][current_x] = ' '
 
     while countdown >= 0:
         
@@ -27,14 +27,9 @@ def create_terrain(width, height, n):
         if direction == 4 and current_x < WIDTH - 1:
             current_x += 1
         
-        map[current_y][current_x] = '#'
+        map[current_y][current_x] = ' '
         
         countdown -= 1
 
     return map
-    # for y in range(len(map)):
-    #     row = ''
-    #     for x in range(len(map[y])):
-    #         row += map[y][x]
-
-    #     print(row)
+   

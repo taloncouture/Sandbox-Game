@@ -53,12 +53,12 @@ def initalize_level(area):
     if area[2] == False:
         tiles.create_level(area)
         tiles.create_objects_random(area, 'tree', 300)
-    if area == map.overworld:
-        for y in range(len(area[1])):
-            for x in range(len(area[1][y])):
-                if area[1][y][x] == 'p':
-                    player_object.set_location(x * config.TILE_WIDTH, y * config.TILE_WIDTH)
-    else:
+    for y in range(len(area[1])):
+        for x in range(len(area[1][y])):
+            if area[1][y][x] == 'p':
+                player_object.set_location(x * config.TILE_WIDTH, y * config.TILE_WIDTH)
+    # Temporary code
+    if player_object.current_area != map.underground_layers:
         if player_object.facing_direction[1] == -1:
             player_object.hitbox.bottom = (config.MAP_HEIGHT * config.TILE_WIDTH) - (config.TILE_WIDTH * 2)
         if player_object.facing_direction[1] == 1:
@@ -115,14 +115,19 @@ while True:
 
     # The loop that draws the tiles on the screen each frame -- has a lot of arguments that may be unnecessary
     for m in range(len(map.current_area) - 1):
-        for y in range(int((config.SCREEN_HEIGHT + y_offset) / config.TILE_WIDTH) + 1):
-            for x in range(int((config.SCREEN_WIDTH + x_offset) / config.TILE_WIDTH) + 1):
-                if (x + 2) * config.TILE_WIDTH > x_offset and (x) * config.TILE_WIDTH < x_offset + config.SCREEN_WIDTH:
-                    if (y + 2) * config.TILE_WIDTH > y_offset and (y) * config.TILE_WIDTH < y_offset + config.SCREEN_HEIGHT:
-                        if m == 0:
-                            screen.blit(tiles.TileID(map.current_area[m][y][x], x, y, map.current_area[m], screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
-                        if m > 0:
-                            tiles.TileID(map.current_area[m][y][x], x, y, map.current_area[m], screen, x_offset, y_offset)
+
+        for y in range(int(((config.SCREEN_HEIGHT + y_offset) / config.TILE_WIDTH)) + 2):
+            for x in range(int(((config.SCREEN_WIDTH + x_offset) / config.TILE_WIDTH)) + 2):
+                try:
+
+                    if (x + 2) * config.TILE_WIDTH > x_offset and (x - 2) * config.TILE_WIDTH < x_offset + config.SCREEN_WIDTH - config.TILE_WIDTH:
+                        if (y + 2) * config.TILE_WIDTH > y_offset and (y - 2) * config.TILE_WIDTH < y_offset + config.SCREEN_HEIGHT - config.TILE_WIDTH:
+                            if m == 0:
+                                screen.blit(tiles.TileID(map.current_area[m][y][x], x, y, map.current_area[m], screen, x_offset, y_offset), ((x * config.TILE_WIDTH) - x_offset, (y * config.TILE_WIDTH) - y_offset))
+                            if m > 0:
+                                tiles.TileID(map.current_area[m][y][x], x, y, map.current_area[m], screen, x_offset, y_offset)
+                except:
+                    pass
 
                 
     #tiles.update_groups(map.overworld_layers, x_offset, y_offset)
@@ -161,8 +166,8 @@ while True:
 
     transition.display()
 
-    #pygame.display.update()
-    pygame.display.flip()
+    pygame.display.update()
+    #pygame.display.flip()
     clock.tick(60)
 
 

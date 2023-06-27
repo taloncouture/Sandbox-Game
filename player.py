@@ -218,12 +218,16 @@ class Player(pygame.sprite.Sprite):
             if keys[pygame.K_SPACE] and self.selected_object.get("type") == 'block':
                 self.place_block()
         if keys[pygame.K_LSHIFT]:
+            # Temporary Code -- will have better world navigation system in place eventually
             if self.current_area[1][self.facing_tile_y][self.facing_tile_x] != ' ' and self.current_area[1][self.facing_tile_y][self.facing_tile_x] != 'p':
                 if tiles.BlockID(self.current_area[1][self.facing_tile_y][self.facing_tile_x]).get("type") == 'door':
-                    if self.current_area == map.overworld_layers:
-                        self.current_area = map.overworld2_layers
-                    else:
-                        self.current_area = map.overworld_layers
+                    if tiles.BlockID(self.current_area[1][self.facing_tile_y][self.facing_tile_x]).get("name") == 'down_stair':
+                        self.current_area = map.underground_layers
+                    if tiles.BlockID(self.current_area[1][self.facing_tile_y][self.facing_tile_x]).get("name") == 'hedge_door':
+                        if self.current_area == map.overworld_layers:
+                            self.current_area = map.overworld2_layers
+                        else:
+                            self.current_area = map.overworld_layers
         if keys[pygame.K_b]:
             self.current_area = map.overworld_layers
 
